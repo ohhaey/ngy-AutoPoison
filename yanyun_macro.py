@@ -10,6 +10,7 @@ import requests
 import webbrowser
 import keyboard
 import mouse
+import random
 
 
 # ==========================================
@@ -33,15 +34,15 @@ AUTHOR_NAME = "南宫悠丶"
 GUILD_AD = "🔥 寒塘渡鹤百业战 持续招人中 🔥"
 CURRENT_VERSION = "v不知道"
 
-GITHUB_ANNOUNCEMENT_URL = "https://raw.githubusercontent.com/ohhaey/ngy-AutoPoison/main/announcement.txt"
-GITHUB_VERSION_URL = "https://raw.githubusercontent.com/ohhaey/ngy-AutoPoison/main/version.txt"
-GITHUB_RELEASE_PAGE = "https://github.com/ohhaey/ngy-AutoPoison/releases"
+GITHUB_ANNOUNCEMENT_URL = "https://raw.githubusercontent.com/你的用户名/你的仓库名/main/announcement.txt"
+GITHUB_VERSION_URL = "https://raw.githubusercontent.com/你的用户名/你的仓库名/main/version.txt"
+GITHUB_RELEASE_PAGE = "https://github.com/你的用户名/你的仓库名/releases"
 
 DATA_FILE = "macros_data.json"
 CONFIG_FILE = "config.json"
 MAX_MACROS = 10
 
-# 热键字典表
+# 硬件级热键字典表 (Virtual-Key Codes)
 VK_MAP = {
     'F1': 0x70, 'F2': 0x71, 'F3': 0x72, 'F4': 0x73, 'F5': 0x74, 'F6': 0x75,
     'F7': 0x76, 'F8': 0x77, 'F9': 0x78, 'F10': 0x79, 'F11': 0x7A, 'F12': 0x7B,
@@ -167,7 +168,6 @@ class MacroApp:
         self.build_settings_tab()
 
     def update_ui_texts(self):
-        """统一刷新界面上的快捷键文字显示"""
         if not self.is_recording:
             self.btn_record.config(text=f"开始录制 ({self.hk_record})")
             self.lbl_record_status.config(text="当前状态: 空闲" if not self.macros else "当前状态: 已就绪")
@@ -194,14 +194,10 @@ class MacroApp:
         btn_frame.pack(pady=15)
 
         self.btn_record = self.create_flat_button(btn_frame, f"开始录制", COLOR_PRIMARY, self.toggle_record)
-        self.btn_record.grid(row=0, column=0, padx=10)
+        self.btn_record.grid(row=0, column=0, padx=10, ipady=5)
 
         self.btn_delete = self.create_flat_button(btn_frame, "删除选中宏", COLOR_TEXT_MUTED, self.delete_macro)
-        self.btn_delete.grid(row=0, column=1, padx=10)
-
-        # 给 Grid 布局的按钮加上高度内边距
-        self.btn_record.grid_configure(ipady=5)
-        self.btn_delete.grid_configure(ipady=5)
+        self.btn_delete.grid(row=0, column=1, padx=10, ipady=5)
 
         self.lbl_record_status = tk.Label(self.tab_record, text="当前状态: 空闲", font=FONT_BASE, fg=COLOR_TEXT_MUTED,
                                           bg=COLOR_SURFACE)
@@ -229,7 +225,6 @@ class MacroApp:
         self.lbl_play_status.pack(pady=10)
 
     def build_settings_tab(self):
-        # 快捷键设置区域
         hk_frame = tk.LabelFrame(self.tab_settings, text=" 快捷键自定义 ", font=FONT_BASE, bg=COLOR_SURFACE,
                                  fg=COLOR_TEXT)
         hk_frame.pack(fill='x', padx=30, pady=(20, 10))
@@ -248,10 +243,8 @@ class MacroApp:
         self.combo_hk_play.grid(row=0, column=3, padx=5, pady=10)
 
         btn_save_hk = self.create_flat_button(hk_frame, "保存键位", COLOR_SUCCESS, self.apply_hotkeys, width=10)
-        btn_save_hk.grid(row=0, column=4, padx=15)
-        btn_save_hk.grid_configure(ipady=2)
+        btn_save_hk.grid(row=0, column=4, padx=15, ipady=2)
 
-        # 广告与更新区域
         tk.Label(self.tab_settings, text=f"✍️ 本程序由 {AUTHOR_NAME} 开发", font=FONT_TITLE, fg=COLOR_TEXT,
                  bg=COLOR_SURFACE).pack(pady=(15, 5))
         tk.Label(self.tab_settings, text=GUILD_AD, font=("Microsoft YaHei", 13, "bold"), fg=COLOR_PRIMARY,
@@ -265,13 +258,11 @@ class MacroApp:
         btn_refresh_ad = self.create_flat_button(btn_frame, "刷新云端公告", "#2196F3",
                                                  lambda: threading.Thread(target=self.fetch_announcement,
                                                                           daemon=True).start())
-        btn_refresh_ad.grid(row=0, column=0, padx=10)
-        btn_refresh_ad.grid_configure(ipady=5)
+        btn_refresh_ad.grid(row=0, column=0, padx=10, ipady=5)
 
         btn_update = self.create_flat_button(btn_frame, "检查应用更新", "#FF9800",
                                              lambda: threading.Thread(target=self.check_update, daemon=True).start())
-        btn_update.grid(row=0, column=1, padx=10)
-        btn_update.grid_configure(ipady=5)
+        btn_update.grid(row=0, column=1, padx=10, ipady=5)
 
         txt_frame = tk.Frame(self.tab_settings, bg=COLOR_SURFACE, highlightbackground="#EEEEEE", highlightthickness=2)
         txt_frame.pack(fill='both', expand=True, padx=30, pady=(10, 20))
@@ -336,7 +327,6 @@ class MacroApp:
             play_pressed = False
 
             while True:
-                # 动态获取当前的十六进制键码
                 vk_rec = VK_MAP.get(self.hk_record, 0x77)
                 vk_play = VK_MAP.get(self.hk_play, 0x78)
 
@@ -393,7 +383,6 @@ class MacroApp:
             self.save_recorded_macro()
 
     def keyboard_event_hook(self, event):
-        # 过滤掉作为快捷键的按键，防止被录制进循环中
         ignore_keys = [self.hk_record.lower(), self.hk_record.lower().replace("page", "page ")]
         if str(event.name).lower() in ignore_keys:
             return
@@ -466,8 +455,16 @@ class MacroApp:
             for event in events:
                 if not self.is_playing: break
 
-                delay = event["time"] - last_time
-                if delay > 0: time.sleep(delay)
+                # 计算原本录制好的间隔时间
+                raw_delay = event["time"] - last_time
+
+                if raw_delay > 0:
+                    # 加入 -15毫秒 到 +25毫秒 的随机波动
+                    jitter = random.uniform(-0.015, 0.025)
+                    # 确保随机减少后的延迟不会变成负数
+                    final_delay = max(0.001, raw_delay + jitter)
+                    time.sleep(final_delay)
+
                 last_time = event["time"]
 
                 if event["type"] == "wait":
